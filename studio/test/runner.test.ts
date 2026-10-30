@@ -115,6 +115,24 @@ describe('Runner', () => {
     expect(readRun(stale.runId, runsDir)?.status).toBe('failed');
   });
 
+  it('leaves a run whose owner process is alive as running', () => {
+    const live: RunRecord = {
+      runId: '20260101-120000-0000abcd',
+      status: 'running',
+      startedAt: '2026-01-01T12:00:00.000Z',
+      finishedAt: null,
+      elapsedMs: null,
+      recipe: recipe(),
+      results: null,
+      error: null,
+      ownerPid: process.pid
+    };
+    mkdirSync(join(runsDir, live.runId));
+    writeFileSync(join(runsDir, live.runId, 'run.json'), JSON.stringify(live));
+    new Runner(runsDir, script);
+    expect(readRun(live.runId, runsDir)?.status).toBe('running');
+  });
+
   it('skips a truncated run.json', () => {
     const runId = '20260101-120000-0badf00d';
     mkdirSync(join(runsDir, runId));

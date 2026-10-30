@@ -33,6 +33,8 @@ export type RunRecord = {
   recipe: Recipe;
   results: RunResults | null;
   error: string | null;
+  /** The process that started the run; absent in records written before it was recorded. */
+  ownerPid?: number;
 };
 
 export type RunEvent =
@@ -155,7 +157,7 @@ export class Runner {
     private readonly script: string = GENERATE_SH
   ) {
     for (const record of listRuns(runsDir)) {
-      if (record.status !== 'running') continue;
+      if (record.status !== 'running' || isAlive(record.ownerPid)) continue;
       record.status = 'failed';
       record.error = 'The studio stopped before this run finished.';
       this.save(join(runsDir, record.runId), record);
@@ -182,7 +184,8 @@ export class Runner {
       elapsedMs: null,
       recipe,
       results: null,
-      error: null
+      error: null,
+      ownerPid: process.pid
     };
     this.save(runDir, record);
     const inherited = Object.entries(process.env).filter(([k]) => !k.startsWith('SYNTHEA_'));
@@ -324,6 +327,16 @@ export class Runner {
 
   private save(runDir: string, record: RunRecord): void {
     writeFileSync(join(runDir, 'run.json'), `${JSON.stringify(record, null, 2)}\n`);
+  }
+}
+
+function isAlive(pid: number | undefined): boolean {
+  if (pid === undefined) return false;
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (e) {
+    return (e as NodeJS.ErrnoException).code === 'EPERM';
   }
 }
 
