@@ -52,7 +52,12 @@ json_string_or_null() {
 }
 
 abs_path() {
-  if [[ -d "$1" ]]; then (cd "$1" && pwd -P); else echo "$(cd "$(dirname "$1")" && pwd -P)/$(basename "$1")"; fi
+  local p="$1" target
+  while [[ -L "$p" ]]; do
+    target="$(readlink "$p")"
+    if [[ "$target" == /* ]]; then p="$target"; else p="$(dirname "$p")/$target"; fi
+  done
+  if [[ -d "$p" ]]; then (cd "$p" && pwd -P); else echo "$(cd "$(dirname "$p")" && pwd -P)/$(basename "$p")"; fi
 }
 
 validate_filters() {
