@@ -115,6 +115,14 @@ describe('Runner', () => {
     expect(readRun(stale.runId, runsDir)?.status).toBe('failed');
   });
 
+  it('skips a truncated run.json', () => {
+    const runId = '20260101-120000-0badf00d';
+    mkdirSync(join(runsDir, runId));
+    writeFileSync(join(runsDir, runId, 'run.json'), '{"runId":');
+    expect(readRun(runId, runsDir)).toBeNull();
+    expect(() => new Runner(runsDir, script)).not.toThrow();
+  });
+
   it('does not pass inherited SYNTHEA_* variables to generate.sh', async () => {
     process.env.SYNTHEA_GENDER = 'F';
     const runner = new Runner(runsDir, script);

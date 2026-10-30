@@ -108,7 +108,12 @@ export function materialise(recipe: Recipe, runDir: string): Record<string, stri
 export function readRun(runId: string, runsDir: string = RUNS_DIR): RunRecord | null {
   if (!isRunId(runId)) return null;
   const file = join(runsDir, runId, 'run.json');
-  return existsSync(file) ? (JSON.parse(readFileSync(file, 'utf8')) as RunRecord) : null;
+  if (!existsSync(file)) return null;
+  try {
+    return JSON.parse(readFileSync(file, 'utf8')) as RunRecord;
+  } catch {
+    return null;
+  }
 }
 
 export function listRuns(runsDir: string = RUNS_DIR): RunRecord[] {
