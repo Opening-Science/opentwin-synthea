@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
@@ -148,6 +148,17 @@ describe('Runner', () => {
     const run = await runner.wait(runner.start(recipe()).runId);
     expect(run.status).toBe('failed');
     expect(run.error).toMatch(/could not be saved/);
+  });
+
+  it('saves a run in its own folder on shutdown', () => {
+    const outDir = mkdtempSync(join(tmpdir(), 'cohort-out-'));
+    const slow = join(runsDir, 'slow.sh');
+    writeFileSync(slow, 'sleep 5\n');
+    const runner = new Runner(runsDir, slow);
+    runner.start(recipe(), outDir);
+    runner.shutdown();
+    expect(JSON.parse(readFileSync(join(outDir, 'run.json'), 'utf8')).status).toBe('cancelled');
+    rmSync(outDir, { recursive: true, force: true });
   });
 
   it('does not pass inherited SYNTHEA_* variables to generate.sh', async () => {

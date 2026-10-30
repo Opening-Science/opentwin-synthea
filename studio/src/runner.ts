@@ -145,7 +145,13 @@ export function collectResults(runDir: string, recordsLine: RunResults['records'
   return { records, files: files.length, bytes, fhirContentSha256: contentChecksum(fhirDir), manifest };
 }
 
-type Active = { record: RunRecord; child: ChildProcess; log: string[]; listeners: Set<(e: RunEvent) => void> };
+type Active = {
+  record: RunRecord;
+  runDir: string;
+  child: ChildProcess;
+  log: string[];
+  listeners: Set<(e: RunEvent) => void>;
+};
 
 /** Runs at most one recipe at a time. */
 export class Runner {
@@ -194,7 +200,7 @@ export class Runner {
       detached: true,
       stdio: ['ignore', 'pipe', 'pipe']
     });
-    const active: Active = { record, child, log: [], listeners: new Set() };
+    const active: Active = { record, runDir, child, log: [], listeners: new Set() };
     this.active = active;
     let kept = 0;
     let recordsLine: RunResults['records'] | null = null;
@@ -290,8 +296,8 @@ export class Runner {
     this.cancel(a.record.runId);
     a.record.finishedAt = new Date().toISOString();
     a.record.error = 'The studio stopped before this run finished.';
-    writeFileSync(join(this.runsDir, a.record.runId, 'log.txt'), `${a.log.join('\n')}\n`);
-    this.save(join(this.runsDir, a.record.runId), a.record);
+    writeFileSync(join(a.runDir, 'log.txt'), `${a.log.join('\n')}\n`);
+    this.save(a.runDir, a.record);
   }
 
   /** Replays the log so far, then follows the run. Returns an unsubscribe function. */
