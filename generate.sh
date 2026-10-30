@@ -158,7 +158,9 @@ ensure_jar() {
     command -v curl >/dev/null 2>&1 || die "curl is required to download the Synthea JAR"
     echo "synthea: downloading $SYNTHEA_VERSION …"
     local tmp="$JAR.partial.$$"
+    trap 'rm -f "$tmp"; exit 143' TERM INT
     curl -fsSL -o "$tmp" "$SYNTHEA_JAR_URL" || { rm -f "$tmp"; die "download failed: $SYNTHEA_JAR_URL"; }
+    trap - TERM INT
     mv -f "$tmp" "$JAR"
   fi
   local actual
