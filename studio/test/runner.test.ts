@@ -141,6 +141,15 @@ describe('Runner', () => {
     expect(() => new Runner(runsDir, script)).not.toThrow();
   });
 
+  it('reports a run whose folder vanished instead of crashing', async () => {
+    const vanish = join(runsDir, 'vanish.sh');
+    writeFileSync(vanish, 'rm -rf "$(dirname "$SYNTHEA_OUT_DIR")"\n');
+    const runner = new Runner(runsDir, vanish);
+    const run = await runner.wait(runner.start(recipe()).runId);
+    expect(run.status).toBe('failed');
+    expect(run.error).toMatch(/could not be saved/);
+  });
+
   it('does not pass inherited SYNTHEA_* variables to generate.sh', async () => {
     process.env.SYNTHEA_GENDER = 'F';
     const runner = new Runner(runsDir, script);

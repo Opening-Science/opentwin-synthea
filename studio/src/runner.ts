@@ -246,8 +246,13 @@ export class Runner {
         record.status = 'failed';
         record.error = lastError || `generate.sh stopped (${signal ?? `exit code ${code}`}).`;
       }
-      writeFileSync(join(runDir, 'log.txt'), `${active.log.join('\n')}\n`);
-      this.save(runDir, record);
+      try {
+        writeFileSync(join(runDir, 'log.txt'), `${active.log.join('\n')}\n`);
+        this.save(runDir, record);
+      } catch (e) {
+        record.status = 'failed';
+        record.error = `The run could not be saved: ${(e as Error).message}`;
+      }
       this.lastFinished = { record, log: active.log };
       this.active = null;
       this.emit(active, { type: 'status', run: record });
