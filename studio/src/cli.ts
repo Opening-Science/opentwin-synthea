@@ -2,7 +2,7 @@
  * WHAT: Command-line runner: reads a recipe file and runs it through generate.sh, exactly as the studio would.
  * NOT:  Does not edit the recipe; an invalid recipe is reported and nothing runs.
  * GOVERNED BY: docs/synthea.md
- * CORRECTNESS: NONE — see docs/findings/no-external-authority.md
+ * CORRECTNESS: NONE, no external authority checks what Synthea generates
  */
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';

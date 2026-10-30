@@ -1,9 +1,9 @@
 /**
- * WHAT: Runs one recipe through tools/synthea/generate.sh into its own folder, streams progress and records results.
+ * WHAT: Runs one recipe through generate.sh into its own folder, streams progress and records results.
  * NOT:  Does not call Java itself or choose Synthea flags; generate.sh is the single place that does, so a run here
  *       and a run from the shell are the same run.
  * GOVERNED BY: docs/synthea.md
- * CORRECTNESS: NONE — see docs/findings/no-external-authority.md
+ * CORRECTNESS: NONE, no external authority checks what Synthea generates
  * GOTCHA: generate.sh starts Java as a grandchild; cancelling must signal the whole process group, not just bash.
  */
 import { type ChildProcess, spawn } from 'node:child_process';

@@ -1,0 +1,29 @@
+{
+  "name": "opentwin-synthea",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Deterministic Synthea FHIR R4 cohorts and Cohort Studio",
+  "type": "module",
+  "packageManager": "pnpm@11.17.0",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "studio": "tsx studio/src/server.ts",
+    "cohort": "tsx studio/src/cli.ts",
+    "repro": "tsx studio/src/repro-check.ts",
+    "format": "biome check --write",
+    "lint": "biome ci",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "author": "Open Science Foundation",
+  "license": "MIT",
+  "devDependencies": {
+    "@biomejs/biome": "2.6.4",
+    "@types/node": "26.6.5",
+    "tsx": "4.23.15",
+    "typescript": "5.9.3",
+    "vitest": "5.0.5"
+  }
+}

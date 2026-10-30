@@ -2,7 +2,7 @@
  * WHAT: Builds the condition picker catalogue by reading ConditionOnset states from Synthea module JSON.
  * NOT:  Does not invent or look up codes; every code and display comes verbatim from the modules that Synthea runs.
  * GOVERNED BY: docs/synthea.md
- * CORRECTNESS: NONE — see docs/findings/no-external-authority.md
+ * CORRECTNESS: NONE, no external authority checks what Synthea generates
  * GOTCHA: The keep module tests "Active Condition", so a condition that Synthea later ends (mayResolve) only keeps
  *         people who still have it when the simulation stops.
  */

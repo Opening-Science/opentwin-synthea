@@ -2,7 +2,7 @@
  * WHAT: Defines the cohort recipe, validates and normalises it, hashes it, and turns it into generate.sh inputs.
  * NOT:  Does not run Synthea (runner.ts) and does not decide which codes exist (conditions.ts reads them from the JAR).
  * GOVERNED BY: docs/synthea.md
- * CORRECTNESS: NONE — see docs/findings/no-external-authority.md
+ * CORRECTNESS: NONE, no external authority checks what Synthea generates
  * GOTCHA: The recipe hash covers every input that changes Synthea's output, including the reference date. Leaving
  *         a field out of the hash would let two different cohorts claim the same recipe.
  */
@@ -380,7 +380,7 @@ export function generateCommand(recipe: Recipe): string {
     modulesDir: recipe.customModules.length > 0 ? 'modules' : null
   });
   const parts = Object.entries(env).map(([k, v]) => `${k}=${shellQuote(v)}`);
-  return `${parts.join(' ')} ./tools/synthea/generate.sh`;
+  return `${parts.join(' ')} ./generate.sh`;
 }
 
 export function recipeFileName(recipe: Recipe): string {

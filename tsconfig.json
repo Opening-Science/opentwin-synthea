@@ -14,6 +14,6 @@
     "forceConsistentCasingInFileNames": true,
     "types": ["node"]
   },
-  "include": ["src/**/*", "test/**/*", "vitest.config.ts"],
-  "exclude": ["node_modules", "runs"]
+  "include": ["studio/src/**/*", "studio/test/**/*", "vitest.config.ts"],
+  "exclude": ["node_modules", "studio/runs", "out"]
 }

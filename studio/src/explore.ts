@@ -2,7 +2,7 @@
  * WHAT: Summarises a finished run's Synthea FHIR bundles into an overview index and one-person detail views.
  * NOT:  Does not interpret, score or validate the records clinically; it counts what Synthea wrote.
  * GOVERNED BY: docs/synthea.md; docs/INTENDED-USE.md
- * CORRECTNESS: NONE — see docs/findings/no-external-authority.md
+ * CORRECTNESS: NONE, no external authority checks what Synthea generates
  * GOTCHA: Ages are measured at the recipe's end date, never at today's date, so the view does not drift over time.
  */
 import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';

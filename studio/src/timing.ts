@@ -2,7 +2,7 @@
  * WHAT: Estimates how long a recipe will take from earlier finished runs on this machine.
  * NOT:  Does not promise a duration; a keep module's cost depends on how rare the chosen conditions are.
  * GOVERNED BY: docs/synthea.md
- * CORRECTNESS: NONE — see docs/findings/no-external-authority.md
+ * CORRECTNESS: NONE, no external authority checks what Synthea generates
  */
 import type { Recipe } from './recipe.ts';
 import type { RunRecord } from './runner.ts';

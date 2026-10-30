@@ -738,7 +738,7 @@ function renderRun(run: RunRecord): void {
       </div>
       <dl class="kv"><dt>Content checksum</dt><dd class="mono">${esc(res.fhirContentSha256)}</dd>
       <dt>Recipe hash</dt><dd class="mono">${esc(r.recipeSha256)}</dd>
-      <dt>Folder</dt><dd class="mono">tools/cohort-studio/runs/${esc(run.runId)}/out/fhir</dd></dl>
+      <dt>Folder</dt><dd class="mono">studio/runs/${esc(run.runId)}/out/fhir</dd></dl>
       <p class="muted">Run the same recipe again and the content checksum is the same.</p>
       <div class="buttons"><button type="button" class="primary" id="exploreThis">Explore this cohort</button>
       <button type="button" id="downloadManifest">Download manifest</button></div>`;
