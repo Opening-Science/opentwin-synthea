@@ -43,7 +43,8 @@ Optional cohort filters, all off by default:
 
 The output folder is deleted and recreated on every run, so the script only
 accepts an empty folder or one it created earlier (it leaves a `.synthea-out`
-marker). A keep module or modules folder is copied into the output folder
+marker; folders from before the marker are accepted when they hold only its
+output). A keep module or modules folder is copied into the output folder
 (`keep-module.json`, `modules/`) before Synthea starts and Synthea reads the
 copies, so `keepModuleSha256` and `modulesDirSha256` (a hash over file contents
 and relative names) describe exactly what the run used. Rerunning needs those

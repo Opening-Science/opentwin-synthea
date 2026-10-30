@@ -75,6 +75,18 @@ validate_filters() {
   return 0
 }
 
+# Folders written before the marker existed hold only these entries.
+holds_only_old_output() {
+  local entry
+  for entry in "$1"/* "$1"/.[!.]*; do
+    [[ -e "$entry" ]] || continue
+    case "$(basename "$entry")" in
+      fhir | metadata | x12 | modules | manifest.json | keep-module.json) ;;
+      *) return 1 ;;
+    esac
+  done
+}
+
 # The output folder is deleted and recreated on every run. Only a folder this
 # script created (it leaves a marker) or an empty one is deleted, so a mistyped
 # SYNTHEA_OUT_DIR cannot remove unrelated files.
@@ -91,7 +103,7 @@ prepare_out_dir() {
   done
   [[ -n "$MODULES_DIR" && "$OUT_DIR/" == "$MODULES_DIR/"* ]] &&
     die "$OUT_DIR is inside SYNTHEA_MODULES_DIR, which is copied into it"
-  if [[ ! -e "$OUT_DIR/.synthea-out" && -n "$(find "$OUT_DIR" -mindepth 1 -print -quit)" ]]; then
+  if [[ ! -e "$OUT_DIR/.synthea-out" ]] && ! holds_only_old_output "$OUT_DIR"; then
     die "$OUT_DIR was not created by this script; use an empty folder"
   fi
   rm -rf "$OUT_DIR"
