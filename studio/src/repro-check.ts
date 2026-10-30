@@ -1,10 +1,9 @@
 /**
  * WHAT: Reproducibility check: runs one small recipe with a keep module several times into separate folders through
  *       generate.sh and fails unless every run's patient-file checksum is identical.
- * NOT:  Does not run in `pnpm test` (it needs Java 21 and the Synthea JAR); run it with `pnpm --filter
- *       @open-twin/cohort-studio repro`.
+ * NOT:  Does not run in `pnpm test` (it needs Java 21 and the Synthea JAR); run it with `pnpm repro`.
  * GOVERNED BY: docs/synthea.md
- * CORRECTNESS: NONE — see docs/findings/no-external-authority.md
+ * CORRECTNESS: NONE, no external authority checks what Synthea generates
  * GOTCHA: Small runs can hide a race; the default (50 people, 3 runs) is the smallest size that showed one in testing.
  */
 import { mkdtempSync, rmSync } from 'node:fs';

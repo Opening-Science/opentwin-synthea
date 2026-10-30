@@ -2,7 +2,7 @@
  * WHAT: Generates the Synthea keep module (GMF v2) that keeps only people with any or all of the chosen conditions.
  * NOT:  Does not choose codes; the caller passes codes read from the Synthea modules (conditions.ts).
  * GOVERNED BY: docs/synthea.md
- * CORRECTNESS: NONE — see docs/findings/no-external-authority.md
+ * CORRECTNESS: NONE, no external authority checks what Synthea generates
  * GOTCHA: Codes are sorted before writing, so the same set clicked in a different order gives the same file and hash.
  */
 import { createHash } from 'node:crypto';

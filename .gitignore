@@ -1,0 +1,9 @@
+node_modules/
+
+# Synthea: the recipe is committed; the JAR cache and generated cohorts are not
+/.cache/
+/out/
+
+# Cohort Studio: one folder per run, and the commercial brand fonts
+/studio/runs/
+/studio/fonts/

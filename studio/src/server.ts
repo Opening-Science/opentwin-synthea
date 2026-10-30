@@ -2,7 +2,7 @@
  * WHAT: Local HTTP server for Cohort Studio: serves the page and the JSON/SSE endpoints for recipes, runs and exploring.
  * NOT:  Not for network exposure; it binds to 127.0.0.1, accepts only local Host headers and has no accounts.
  * GOVERNED BY: docs/synthea.md; docs/INTENDED-USE.md
- * CORRECTNESS: NONE — see docs/findings/no-external-authority.md
+ * CORRECTNESS: NONE, no external authority checks what Synthea generates
  * GOTCHA: The page is TypeScript served with types stripped at request time (node:module stripTypeScriptTypes), so
  *         the client may only use erasable syntax: no enums, namespaces or parameter properties.
  *         The brand fonts are commercial: /fonts.css points at local() copies and, only when present, the files in the

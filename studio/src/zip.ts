@@ -2,7 +2,7 @@
  * WHAT: Reads selected entries from a ZIP/JAR file (stored or deflated, ZIP64 aware) without unpacking it.
  * NOT:  Does not write archives, check signatures or support encryption or multi-disk archives.
  * GOVERNED BY: docs/synthea.md
- * CORRECTNESS: NONE — see docs/findings/no-external-authority.md
+ * CORRECTNESS: NONE, no external authority checks what Synthea generates
  * GOTCHA: The Synthea JAR holds more than 65,535 entries, so the ZIP64 end record is the normal path, not an edge case.
  */
 import { closeSync, fstatSync, openSync, readSync } from 'node:fs';

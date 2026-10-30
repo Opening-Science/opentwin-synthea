@@ -188,7 +188,7 @@ describe('generate.sh inputs', () => {
     expect(generateCommand(recipe)).toBe(
       'SYNTHEA_POPULATION=20 SYNTHEA_SEED=42 SYNTHEA_CLINICIAN_SEED=43 SYNTHEA_STATE=Massachusetts ' +
         'SYNTHEA_REFERENCE_DATE=20260101 SYNTHEA_END_DATE=20260101 SYNTHEA_OUT_DIR=my-cohort SYNTHEA_CITY=Boston ' +
-        'SYNTHEA_AGE=40-75 SYNTHEA_GENDER=F SYNTHEA_KEEP_MODULE=keep.json ./tools/synthea/generate.sh'
+        'SYNTHEA_AGE=40-75 SYNTHEA_GENDER=F SYNTHEA_KEEP_MODULE=keep.json ./generate.sh'
     );
   });
 });

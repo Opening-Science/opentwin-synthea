@@ -2,7 +2,7 @@
  * WHAT: Reads the picker catalogue (conditions from built-in modules, cities per state) out of the pinned Synthea JAR.
  * NOT:  Does not ship or cache SNOMED CT content in the repository; everything is read from the local JAR at start-up.
  * GOVERNED BY: docs/synthea.md
- * CORRECTNESS: NONE — see docs/findings/no-external-authority.md
+ * CORRECTNESS: NONE, no external authority checks what Synthea generates
  */
 import { type CatalogCondition, extractConditions, readJarModules } from './conditions.ts';
 import { readZipEntries } from './zip.ts';

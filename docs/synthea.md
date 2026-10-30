@@ -1,9 +1,9 @@
 # Synthea cohort generation
 
-Synthetic FHIR R4 patients for local Route B work (structured FHIR at build
-time). Inventory of Anchor LOINC coverage lives in
-[findings/synthea-coverage.md](findings/synthea-coverage.md) — this document is
-only the **generator recipe**.
+Synthetic FHIR R4 patients for
+[open-twin](https://github.com/Opening-Science/open-twin) and
+[TwinLLM](https://github.com/Opening-Science/twin-llm). This document is the
+**generator recipe**; what the cohorts cover is documented by those projects.
 
 ## Why the cohort is not committed
 
@@ -18,12 +18,12 @@ is a maintainer decision — not part of this recipe.
 ## Generate
 
 ```bash
-./tools/synthea/generate.sh
+./generate.sh
 ```
 
 Defaults: Synthea **v4.0.0**, seed **42**, clinician seed **43**, N=**100**,
 Massachusetts, reference and end date **20260101**, FHIR R4 only. Output:
-`tools/synthea/out/` (gitignored), plus `out/manifest.json` with seeds, dates,
+`out/` (gitignored), plus `out/manifest.json` with seeds, dates,
 version, config hash, and patient file count.
 
 Override with `SYNTHEA_POPULATION`, `SYNTHEA_SEED`, `SYNTHEA_CLINICIAN_SEED`,
@@ -39,7 +39,7 @@ Optional cohort filters, all off by default:
 | `SYNTHEA_CITY`        | city argument            | a city Synthea knows in `SYNTHEA_STATE`            |
 | `SYNTHEA_KEEP_MODULE` | `-k`                     | keep module JSON; only people it keeps are written |
 | `SYNTHEA_MODULES_DIR` | `-d`                     | extra modules, e.g. Synthea Module Builder exports |
-| `SYNTHEA_OUT_DIR`     | `exporter.baseDirectory` | output folder instead of `tools/synthea/out/`      |
+| `SYNTHEA_OUT_DIR`     | `exporter.baseDirectory` | output folder instead of `out/`                    |
 
 The output folder is deleted and recreated on every run, so the script only
 accepts an empty folder or one it created earlier (it leaves a `.synthea-out`
@@ -69,7 +69,7 @@ in parallel instead.
 To check two runs match, compare:
 
 ```bash
-cd tools/synthea/out/fhir && sha256sum *.json | sort | sha256sum
+cd out/fhir && sha256sum *.json | sort | sha256sum
 ```
 
 `configHash` in the manifest covers the contents of `synthea.properties` and
@@ -83,7 +83,7 @@ The recipe used so far is 100 batches: seeds 1001–1100, clinician seeds
 2001–2100, giving 1,000,000 living patients (about 1.15 million records with the
 deceased) and about 860 MB compressed per batch.
 
-`generate.sh` writes to `tools/synthea/out/` and clears it first unless
+`generate.sh` writes to `out/` and clears it first unless
 `SYNTHEA_OUT_DIR` names another folder; give each parallel batch its own
 `SYNTHEA_OUT_DIR`. Sequentially, stopping at the first failure so a partial
 batch is never archived:
@@ -92,10 +92,10 @@ batch is never archived:
 set -euo pipefail
 for i in $(seq 1 100); do
   SYNTHEA_POPULATION=10000 SYNTHEA_SEED=$((1000 + i)) SYNTHEA_CLINICIAN_SEED=$((2000 + i)) \
-    ./tools/synthea/generate.sh
+    ./generate.sh
   name=$(printf 'batch-%03d' "$i")
-  cp tools/synthea/out/manifest.json "$name.manifest.json"
-  tar -C tools/synthea/out -cf - fhir | zstd -T0 -10 -o "$name.tar.zst"
+  cp out/manifest.json "$name.manifest.json"
+  tar -C out -cf - fhir | zstd -T0 -10 -o "$name.tar.zst"
 done
 ```
 
@@ -120,7 +120,7 @@ shifted, and a slightly different set of deaths near the end of the simulation.
 
 ## Cohort Studio
 
-[`tools/cohort-studio/`](../tools/cohort-studio/README.md) is a local web app on
+[`studio/`](../studio/README.md) is a local web app on
 top of `generate.sh` (`pnpm studio`, then http://127.0.0.1:4400). A researcher
 picks population, place, ages, sex, dates and seeds, and clicks conditions
 together from a list read out of the JAR's own modules; the studio turns them
@@ -131,10 +131,20 @@ through `generate.sh` into its own folder, and a finished run can be explored
 in the browser.
 
 `pnpm cohort <recipe.json>` reruns a recipe without the page, and
-`pnpm --filter @open-twin/cohort-studio repro` checks that one recipe run three
+`pnpm repro` checks that one recipe run three
 times gives identical patient files. All people it produces are synthetic.
 
-## CI without Java
+## CI
 
-`packages/fhir-r4/src/tests/fixtures/synthea/` holds three trimmed patient
-bundles so fixture tests run without downloading Synthea or requiring a JVM.
+`pnpm test` needs no Java. A separate CI job installs Java 21, caches the JAR by
+its sha256, generates two people and runs the reproducibility check.
+
+## Known Synthea behaviour
+
+- Synthea records a condition at the next wellness visit, not on the day its
+  internal state starts.
+- Synthea exports 10 years of history by default
+  (`exporter.years_of_history = 10`), so events that ended before then are not
+  in the bundles.
+- v4.0.0's stroke calculator reads a coronary heart disease attribute that no
+  module sets.

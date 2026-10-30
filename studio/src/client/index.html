@@ -750,7 +750,7 @@
           <h2 id="jarTitle">Synthea is not downloaded yet</h2>
           <p>
             Cohort Studio needs the pinned Synthea release (about 200 MB, checked against the sha256 in
-            <code>tools/synthea/version.lock</code>). The condition list is read from it.
+            <code>version.lock</code>). The condition list is read from it.
           </p>
           <div class="buttons"><button class="primary" id="prepare" type="button">Download Synthea</button></div>
           <p class="muted" id="prepareStatus" role="status"></p>
@@ -900,7 +900,7 @@
               <details>
                 <summary>Same run with generate.sh</summary>
                 <p class="muted">
-                  The studio runs <code>tools/synthea/generate.sh</code> with these inputs; <code>keep.json</code> is the
+                  The studio runs <code>generate.sh</code> with these inputs; <code>keep.json</code> is the
                   keep module above. <span id="commandHelp"></span>
                 </p>
                 <pre id="generateCmd" class="wrap"></pre>
@@ -934,7 +934,7 @@
             </section>
             <aside class="card" aria-labelledby="pastTitle">
               <h2 id="pastTitle">Earlier runs</h2>
-              <p class="muted">Kept in <code>tools/cohort-studio/runs/</code>. Delete folders there to free space.</p>
+              <p class="muted">Kept in <code>studio/runs/</code>. Delete folders there to free space.</p>
               <div class="scroll"><table id="pastRuns"></table></div>
             </aside>
           </div>

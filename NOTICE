@@ -1,0 +1,6 @@
+opentwin-synthea
+Copyright (c) 2026 Open Science Foundation (Opening Science)
+
+synthea.properties and the keep-module format follow Synthea, by The MITRE Corporation, licensed under the
+Apache License 2.0 (https://github.com/synthetichealth/synthea). The Synthea JAR is downloaded at run time from
+its release page and is not distributed with this repository.

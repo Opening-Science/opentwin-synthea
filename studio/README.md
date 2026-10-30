@@ -6,7 +6,7 @@ run it reproducibly, and look at what came out.
 
 Every person it produces is made up by a simulator. The data is for research
 and software testing only. It says nothing about real people and is not
-clinically validated; see [intended use](../../docs/INTENDED-USE.md).
+clinically validated; see [intended use](../docs/INTENDED-USE.md).
 
 ## Start
 
@@ -18,8 +18,8 @@ pnpm studio            # http://127.0.0.1:4400  (COHORT_STUDIO_PORT=4401 pnpm st
 ```
 
 The server listens on 127.0.0.1 only. If the pinned Synthea JAR is not in
-`tools/synthea/.cache/` yet, the page offers to download it and checks it
-against the sha256 in `tools/synthea/version.lock`.
+`.cache/` yet, the page offers to download it and checks it
+against the sha256 in `version.lock`.
 
 ## What it does
 
@@ -38,8 +38,8 @@ against the sha256 in `tools/synthea/version.lock`.
    The recipe panel shows the exact recipe, its hash, a time estimate, the
    generated keep module and the equivalent `generate.sh` call, with buttons to
    download, load or paste a recipe and copy the command that reruns it.
-2. **Run.** One run at a time, through `tools/synthea/generate.sh`, into
-   `tools/cohort-studio/runs/<runId>/` (gitignored). Synthea's output streams to
+2. **Run.** One run at a time, through `generate.sh`, into
+   `studio/runs/<runId>/` (gitignored). Synthea's output streams to
    the page; a run can be cancelled. At the end it shows records (total, alive,
    died), files, size, the content checksum and the manifest.
 3. **Explore.** A plain-language overview of a finished run (ages, visit types,
@@ -88,7 +88,7 @@ covered through their sha256. Limits: 1–10,000 people, ages 0–140, dates
 Rerun a downloaded recipe without the page, from the repository root:
 
 ```bash
-pnpm cohort cohort-recipe-<hash>.json            # into tools/cohort-studio/runs/<runId>/
+pnpm cohort cohort-recipe-<hash>.json            # into studio/runs/<runId>/
 pnpm cohort cohort-recipe-<hash>.json --out dir  # into an empty folder of your choice
 ```
 
@@ -97,14 +97,14 @@ pnpm cohort cohort-recipe-<hash>.json --out dir  # into an empty folder of your 
 The same recipe with the same Synthea version, the same JAR (sha256) and the
 same `synthea.properties` gives byte-identical patient files. Runs go through
 `generate.sh`, which fixes the dates, runs Java in UTC and Synthea on one
-thread; see [docs/synthea.md](../../docs/synthea.md#reproducibility). The
+thread; see [docs/synthea.md](../docs/synthea.md#reproducibility). The
 content checksum equals `cd out/fhir && sha256sum *.json | sort | sha256sum`.
 
 Check it on your machine (Java and the JAR needed; not part of `pnpm test`):
 
 ```bash
-pnpm --filter @open-twin/cohort-studio repro            # 50 people, 3 runs, 3 folders
-pnpm --filter @open-twin/cohort-studio repro --population 100 --runs 2 --keep
+pnpm repro            # 50 people, 3 runs, 3 folders
+pnpm repro --population 100 --runs 2 --keep
 ```
 
 It runs 50 people aged 40–75 with hypertension or type 2 diabetes three times
@@ -129,7 +129,7 @@ some.
 The page is set in Selecta and ABC Diatype Semi Mono, the foundation's fonts.
 Both are commercial and are not in this repository. The page uses them when
 they are installed on your computer, or when their files are in
-`tools/cohort-studio/fonts/` (gitignored): `Selecta-Regular.woff2`,
+`studio/fonts/` (gitignored): `Selecta-Regular.woff2`,
 `Selecta-Medium.woff2`, `Selecta-Bold.woff2`, `ABCDiatypeSemiMono-Regular.woff2`
 and `ABCDiatypeSemiMono-Bold.woff2`. Without them it falls back to the system
 fonts.
@@ -137,11 +137,11 @@ fonts.
 ## Development
 
 ```bash
-pnpm --filter @open-twin/cohort-studio test   # unit tests (no Java needed)
-pnpm --filter @open-twin/cohort-studio exec tsc --noEmit
+pnpm test             # unit tests (no Java needed)
+pnpm typecheck
 pnpm lint
 ```
 
-The page (`src/client/app.ts`) is TypeScript served with types stripped by
+The page (`studio/src/client/app.ts`) is TypeScript served with types stripped by
 Node's `stripTypeScriptTypes`, so it uses erasable syntax only and no imports.
 No frontend framework and no runtime dependencies beyond Node and tsx.
