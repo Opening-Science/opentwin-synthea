@@ -89,6 +89,8 @@ prepare_out_dir() {
   for input in "$KEEP_MODULE" "$MODULES_DIR"; do
     [[ -n "$input" && "$input/" == "$OUT_DIR/"* ]] && die "$input is inside the output folder, which is deleted first"
   done
+  [[ -n "$MODULES_DIR" && "$OUT_DIR/" == "$MODULES_DIR/"* ]] &&
+    die "$OUT_DIR is inside SYNTHEA_MODULES_DIR, which is copied into it"
   if [[ ! -e "$OUT_DIR/.synthea-out" && -n "$(find "$OUT_DIR" -mindepth 1 -print -quit)" ]]; then
     die "$OUT_DIR was not created by this script; use an empty folder"
   fi
