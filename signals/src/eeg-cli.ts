@@ -2,6 +2,7 @@
  * WHAT: Command line: writes one EDF EEG recording per person alive on the date in a Synthea FHIR output folder, plus
  *       manifest.json with the recipe, the montage and the hash of every input and output file.
  * NOT:  Does not shape the EEG to the person's age or conditions yet; the person's id seeds the input noise.
+ *       Awake uses the Jansen-Rit model (alpha rhythm); N2 and N3 use the thalamocortical sleep model.
  * GOVERNED BY: docs/signals.md
  * CORRECTNESS: NONE, no external authority checks what Synthea generates
  * GOTCHA: EDF holds whole seconds; the manifest holds no timestamps, so the same inputs give the same bytes.
@@ -12,9 +13,12 @@ import { join, resolve } from 'node:path';
 import { writeEdf } from './edf.ts';
 import { generateEeg } from './eeg.ts';
 import { readPerson } from './person.ts';
+import { generateSleepEeg } from './sleep-eeg.ts';
 
 const out = (s: string): boolean => process.stdout.write(`${s}\n`);
-const usage = 'Usage: pnpm eeg <synthea fhir folder> --out <empty folder> [--seconds 30] [--at 2026-01-01]';
+const usage =
+  'Usage: pnpm eeg <synthea fhir folder> --out <empty folder> [--seconds 30] [--at 2026-01-01] [--stage awake|N2|N3]';
+const STAGES = ['awake', 'N2', 'N3'] as const;
 const sha256 = (data: string | Buffer): string => createHash('sha256').update(data).digest('hex');
 export const MONTAGE = ['Fp1', 'Fp2', 'C3', 'C4', 'O1', 'O2'] as const;
 
@@ -26,16 +30,20 @@ function option(args: string[], name: string): string | undefined {
 function main(): number {
   const args = process.argv.slice(2);
   const base = process.env.INIT_CWD ?? process.cwd();
-  const values = new Set(['--out', '--seconds', '--at'].map((n) => args.indexOf(n) + 1).filter((i) => i > 0));
+  const values = new Set(
+    ['--out', '--seconds', '--at', '--stage'].map((n) => args.indexOf(n) + 1).filter((i) => i > 0)
+  );
   const source = args.find((a, i) => !a.startsWith('--') && !values.has(i));
   const outArg = option(args, '--out');
   const seconds = Number(option(args, '--seconds') ?? 30);
   const at = option(args, '--at') ?? '2026-01-01';
+  const stage = (option(args, '--stage') ?? 'awake') as (typeof STAGES)[number];
   if (
     !source ||
     !outArg ||
     !(Number.isInteger(seconds) && seconds > 0 && seconds <= 3600) ||
-    !/^\d{4}-\d{2}-\d{2}$/.test(at)
+    !/^\d{4}-\d{2}-\d{2}$/.test(at) ||
+    !STAGES.includes(stage)
   ) {
     out(usage);
     return 2;
@@ -48,7 +56,9 @@ function main(): number {
   }
   mkdirSync(outDir, { recursive: true });
 
-  const recipe = { seconds, sampleRate: 256, at, montage: MONTAGE, connectivity: 135, microvoltsSd: 20 };
+  const model =
+    stage === 'awake' ? { model: 'jansen-rit', connectivity: 135, microvoltsSd: 20 } : { model: 'thalamocortical' };
+  const recipe = { seconds, sampleRate: 256, at, stage, montage: MONTAGE, ...model };
   const people: { personId: string; sourceSha256: string; outputSha256: string }[] = [];
   let skipped = 0;
   for (const file of readdirSync(sourceDir)
@@ -62,10 +72,13 @@ function main(): number {
       skipped++;
       continue;
     }
-    const eeg = generateEeg({ seed: person.id, seconds, channels: MONTAGE });
+    const eeg =
+      stage === 'awake'
+        ? generateEeg({ seed: person.id, seconds, channels: MONTAGE })
+        : generateSleepEeg({ seed: person.id, stage, seconds, channels: MONTAGE });
     const edf = writeEdf({
       patient: `synthetic ${person.id.slice(0, 60)}`,
-      recording: 'opentwin-synthea jansen-rit, synthetic, not for clinical use',
+      recording: `opentwin-synthea ${model.model} ${stage}, synthetic, not for clinical use`,
       start: new Date(`${at}T00:00:00Z`),
       sampleRate: eeg.sampleRate,
       channels: eeg.channels.map((c) => ({ label: `EEG ${c.label}`, unit: 'uV', samples: c.microvolts }))
@@ -74,14 +87,14 @@ function main(): number {
     people.push({ personId: person.id, sourceSha256: sha256(text), outputSha256: sha256(edf) });
   }
   const manifest = {
-    generator: 'jansen-rit',
+    generator: model.model,
     format: 'opentwin-synthea-signal/1',
     recipe,
     people,
     skippedDeceased: skipped
   };
   writeFileSync(join(outDir, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`);
-  out(`Wrote ${people.length} EEG recordings to ${outDir} (${skipped} skipped as deceased)`);
+  out(`Wrote ${people.length} ${stage} EEG recordings to ${outDir} (${skipped} skipped as deceased)`);
   return 0;
 }
 
