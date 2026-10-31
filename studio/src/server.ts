@@ -293,7 +293,9 @@ async function route(req: IncomingMessage, res: ServerResponse): Promise<void> {
     }
     if (method === 'GET' && action === 'signals') {
       const index = loadIndex(runDir, run.recipe.endDate);
-      const s = personSignals(runDir, index, url.searchParams.get('f') ?? '', run.recipe.endDate);
+      const stage = url.searchParams.get('stage') ?? 'awake';
+      if (stage !== 'awake' && stage !== 'N2' && stage !== 'N3') return send(res, 400, { error: 'Unknown stage.' });
+      const s = personSignals(runDir, index, url.searchParams.get('f') ?? '', run.recipe.endDate, stage);
       return s ? send(res, 200, s) : send(res, 404, { error: 'No such person in this run.' });
     }
   }

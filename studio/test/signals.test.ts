@@ -62,3 +62,12 @@ describe('personSignals', () => {
     });
   });
 });
+
+describe('personSignals sleep stages', () => {
+  it('gives 30 s of C3 sleep EEG for N2 and N3', () => {
+    const s = personSignals(runDir, index, 'adult.json', '2026-01-01', 'N3');
+    expect(s?.stage).toBe('N3');
+    expect(s?.eeg?.channels[0]?.label).toBe('C3');
+    expect(s?.eeg?.channels[0]?.microvolts).toHaveLength(30 * 256);
+  });
+});

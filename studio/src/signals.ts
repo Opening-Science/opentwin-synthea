@@ -1,5 +1,6 @@
 /**
- * WHAT: Generates one person's signals for the studio's Signals tab: a 10 s ECG, 10 s of awake EEG and 30 days of
+ * WHAT: Generates one person's signals for the studio's Signals tab: a 10 s ECG, EEG (10 s awake or 30 s of sleep
+ *       stage N2 or N3) and 30 days of
  *       wearable values, the same generators and seeds the pnpm ecg, eeg and wearables commands use.
  * NOT:  Does not write files; whole-cohort exports are the command-line tools, whose commands the tab shows.
  * GOVERNED BY: docs/signals.md
@@ -12,11 +13,20 @@ import { generateEcg } from '../../signals/src/ecg.ts';
 import { ATRIAL_FIBRILLATION, DEFAULT_HEART_RATE } from '../../signals/src/ecg-cohort.ts';
 import { generateEeg } from '../../signals/src/eeg.ts';
 import { ageAt, hasCondition, readPerson } from '../../signals/src/person.ts';
+import { generateSleepEeg } from '../../signals/src/sleep-eeg.ts';
 import { wearableDays } from '../../signals/src/wearables.ts';
 import type { ExploreIndex } from './explore.ts';
 
 /** `date` is the run's end date, YYYY-MM-DD. */
-export function personSignals(runDir: string, index: ExploreIndex, file: string, date: string) {
+export type EegStage = 'awake' | 'N2' | 'N3';
+
+export function personSignals(
+  runDir: string,
+  index: ExploreIndex,
+  file: string,
+  date: string,
+  stage: EegStage = 'awake'
+) {
   if (!index.patients.some((p) => p.f === file)) return null;
   const person = readPerson(JSON.parse(readFileSync(join(runDir, 'out', 'fhir', file), 'utf8')), date);
   const alive = person.deceasedAt === null || person.deceasedAt.slice(0, 10) > date;
@@ -36,7 +46,12 @@ export function personSignals(runDir: string, index: ExploreIndex, file: string,
           ...generateEcg({ seed: person.id, seconds: 10, heartRate, atrialFibrillation: af })
         }
       : null,
-    eeg: alive ? generateEeg({ seed: person.id, seconds: 10, channels: ['O1'] }) : null,
+    stage,
+    eeg: !alive
+      ? null
+      : stage === 'awake'
+        ? generateEeg({ seed: person.id, seconds: 10, channels: ['O1'] })
+        : generateSleepEeg({ seed: person.id, stage, seconds: 30, channels: ['C3'] }),
     wearables: wearableDays(person, date, 30, person.id)
   };
 }

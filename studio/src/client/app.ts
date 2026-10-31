@@ -123,6 +123,7 @@ type Signals = {
   date: string;
   age: number;
   alive: boolean;
+  stage: 'awake' | 'N2' | 'N3';
   ecg: {
     sampleRate: number;
     millivolts: number[];
@@ -1318,9 +1319,24 @@ const WEARABLE_SERIES: Array<[string, string, (d: WearableDay) => number]> = [
   ['Mean overnight SpO2', '%', (d) => d.spo2AveragePercent]
 ];
 
-async function renderSignals(run: RunRecord, f: string): Promise<void> {
+const EEG_STAGES: Array<[Signals['stage'], string, string]> = [
+  ['awake', 'Awake', 'Jansen-Rit model, alpha rhythm, O1, first 5 s.'],
+  [
+    'N2',
+    'Sleep N2',
+    'Thalamocortical model, C3, 30 s: spindles and isolated K-complexes (calibrated, see docs/signals.md).'
+  ],
+  [
+    'N3',
+    'Sleep N3',
+    'Thalamocortical model, C3, 30 s: slow oscillations near 0.8 Hz (calibrated, see docs/signals.md).'
+  ]
+];
+
+async function renderSignals(run: RunRecord, f: string, stage: Signals['stage'] = 'awake'): Promise<void> {
   const host = el('signals');
-  const r = await api<Signals>(`/api/runs/${run.runId}/signals?f=${encodeURIComponent(f)}`);
+  const r = await api<Signals>(`/api/runs/${run.runId}/signals?f=${encodeURIComponent(f)}&stage=${stage}`);
+  const stageInfo = EEG_STAGES.find((x) => x[0] === r.stage) ?? EEG_STAGES[0];
   const fhir = `studio/runs/${run.runId}/out/fhir`;
   const trace = (xs: number[], rate: number, seconds: number): Array<[string, number]> =>
     xs.slice(0, rate * seconds).map((v, i) => [String(+(i / rate).toFixed(3)), v]);
@@ -1334,7 +1350,8 @@ async function renderSignals(run: RunRecord, f: string): Promise<void> {
       r.alive
         ? `<div class="grid g2">
       <div><h4>ECG, lead II, first 5 s</h4><div id="ecgChart"></div><p class="muted">${esc(ecgNote)} ECGSYN model.</p></div>
-      <div><h4>EEG, awake, O1, first 5 s</h4><div id="eegChart"></div><p class="muted">Jansen-Rit model, alpha rhythm.</p></div>
+      <div><h4>EEG</h4><label for="stageSel" class="sr-only">EEG stage</label><select id="stageSel">${EEG_STAGES.map((x) => `<option value="${x[0]}"${x[0] === r.stage ? ' selected' : ''}>${esc(x[1])}</option>`).join('')}</select>
+        <div id="eegChart" style="margin-top:8px"></div><p class="muted">${esc(stageInfo?.[2] ?? '')}</p></div>
     </div>`
         : '<p class="muted">This person died before the date, so there are no signals.</p>'
     }
@@ -1349,8 +1366,18 @@ async function renderSignals(run: RunRecord, f: string): Promise<void> {
     }
     <p class="muted">For the whole cohort: <code>pnpm ecg ${esc(fhir)} --out ecg</code>, <code>pnpm eeg ${esc(fhir)} --out eeg</code>, <code>pnpm wearables ${esc(fhir)} --out wearables</code>.</p>`;
   if (r.ecg) line(el('ecgChart'), trace(r.ecg.millivolts, r.ecg.sampleRate, 5), 'mV', false, 'ECG lead II');
-  const o1 = r.eeg?.channels[0];
-  if (r.eeg && o1) line(el('eegChart'), trace(o1.microvolts, r.eeg.sampleRate, 5), 'µV', false, 'EEG O1');
+  const ch = r.eeg?.channels[0];
+  if (r.eeg && ch)
+    line(
+      el('eegChart'),
+      trace(ch.microvolts, r.eeg.sampleRate, r.stage === 'awake' ? 5 : 30),
+      'µV',
+      false,
+      `EEG ${ch.label}`
+    );
+  document.getElementById('stageSel')?.addEventListener('change', (e) => {
+    void renderSignals(run, f, (e.target as HTMLSelectElement).value as Signals['stage']);
+  });
   const days = r.wearables;
   if (days) {
     const draw = (): void => {
