@@ -26,7 +26,7 @@ jobs:
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
-      - run: shellcheck generate.sh
+      - run: shellcheck generate.sh generate.test.sh
       - run: pnpm typecheck
       - run: pnpm test
 
@@ -53,4 +53,5 @@ jobs:
           key: synthea-jar-${{ steps.pin.outputs.sha256 }}
       - run: pnpm install --frozen-lockfile
       - run: SYNTHEA_POPULATION=2 ./generate.sh
+      - run: pnpm test:generate
       - run: pnpm repro
