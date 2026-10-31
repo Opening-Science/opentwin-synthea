@@ -11,7 +11,7 @@ export default defineConfig({
     typecheck: { enabled: false },
     hookTimeout: 20_000,
     testTimeout: 20_000,
-    include: ['studio/test/**/*.test.ts'],
+    include: ['studio/test/**/*.test.ts', 'signals/test/**/*.test.ts'],
     maxWorkers: process.env.CI ? undefined : 4,
     reporters: process.env.CI ? ['junit'] : ['default']
   }
