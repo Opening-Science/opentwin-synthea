@@ -103,6 +103,28 @@ done
 Keep the default dates, or set both date variables to the same value for every
 batch and record them.
 
+## The 1,000,000 person cohort
+
+Generated 26 to 27 October 2026 with the loop above and this recipe as it is
+now (`configHash` `a01bb7e7…`, Synthea v4.0.0, default dates 20260101): 100
+batches, seeds 1001 to 1100 and clinician seeds 2001 to 2100, 1,150,311 records
+of which 1,000,000 are alive at the end, 91.7 GB as `tar.zst`. The data is not
+in this repository. [`cohorts/synthea-1m-v2.tsv`](../cohorts/synthea-1m-v2.tsv)
+records every batch: seeds, record counts, the FHIR content checksum (as under
+[Reproducibility](#reproducibility)), and the archive's size and sha256.
+
+Check a copy of the archives against it:
+
+```bash
+tail -n +2 cohorts/synthea-1m-v2.tsv |
+  awk -F'\t' -v d=/path/to/batches '{print $9 "  " d "/" $1 ".tar.zst"}' |
+  sha256sum -c --quiet
+```
+
+A batch regenerated with its seeds gives the same FHIR content checksum (checked
+for batch-001 on 31 October 2026); the
+archive checksum also depends on the zstd version.
+
 ## Cohorts generated before fixed dates
 
 These were made with the script before it passed fixed dates and used one
@@ -113,8 +135,9 @@ generated in:
 - The 10,000-patient reference cohort: seed 42, clinician seed 43, generated
   2026-10-24, 11,551 records, content checksum
   `f918035848aed656e4d573197cc616f4948d2106a0bb368dd629a54dadbc06c2`.
-- The 1,000,000-patient batches: seeds 1001–1100, clinician seeds 2001–2100,
-  generated 2026-10-24 to 2026-10-25.
+- The first 1,000,000-patient batches: seeds 1001–1100, clinician seeds
+  2001–2100, generated 2026-10-24 to 2026-10-25. Replaced by
+  [the 1,000,000 person cohort](#the-1000000-person-cohort).
 
 A rerun with the same seeds produces the same patients with every timestamp
 shifted, and a slightly different set of deaths near the end of the simulation.
