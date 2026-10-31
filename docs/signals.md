@@ -60,6 +60,39 @@ standard deviation of 20 microvolts and driving channels with independent
 input are extensions. The EEG does not yet depend on the person's age or
 conditions; their id seeds it.
 
+### Sleep stages N2 and N3
+
+`pnpm eeg ... --stage N2` or `--stage N3` uses the thalamocortical neural
+mass model of Schellenberger Costa et al. (PLoS Comput Biol 2016) instead of
+Jansen-Rit: a cortical column with sodium-dependent adaptation coupled to a
+thalamic relay and reticular population with T-type calcium and h currents.
+N2 gives isolated K-complexes (about 2 a minute) with thalamic spindles at 12
+to 15 Hz; N3 gives slow oscillations near 0.8 Hz. `--stage awake`, the
+default, keeps the Jansen-Rit alpha rhythm.
+
+The model is built from the paper's equations and parameter tables, not from
+the authors' code, which has no licence. Where the publications are
+incomplete or inconsistent, this repository decides as follows, and the module
+header lists the same points:
+
+- the firing rate includes C = π/√3 (Weigenand et al. 2014, Eq. 1 and Text S2),
+  which the 2016 supplement leaves out;
+- k1 = 2.5·10⁷ mM⁻⁴ ms⁻¹ comes from Destexhe et al. 1996, the source of the
+  h-current kinetics, as the 2016 table omits it;
+- currents are outward positive throughout, so the T and h currents
+  depolarize the relay cells as the paper describes; the supplement's signs
+  would make them hyperpolarize;
+- the second E_Ca in the table (−40 mV) is read as E_h.
+
+With those, the model shows the paper's bifurcation structure (a canard
+explosion near the Hopf point at high gain, a gradual Hopf beyond the cusp,
+spindles from the isolated thalamus), but at the published stage settings its
+cortex sits further from the bifurcation than the paper's. **The stages are
+therefore calibrated, not reproduced**: g_KNa is 1.68 in N2 (published 1.33)
+and 2.10 in N3 (published 1.88), chosen so every seed tested shows the
+paper's stage behaviour; the neural gain and thalamic settings are as
+published. The tests check that behaviour, not the published numbers.
+
 ## Wearables
 
 `pnpm wearables <synthea fhir folder> --out <empty folder> [--days 30] [--end 2026-01-01]`
