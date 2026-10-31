@@ -43,3 +43,18 @@ People with atrial fibrillation on the date (SNOMED CT 49436004, from Synthea's
 `atrial_fibrillation` module) get an extension that is not in the publication:
 no P wave, RR intervals drawn independently with a coefficient of variation of
 0.2, and 0.05 mV fibrillatory waves at 6 Hz.
+
+## EEG
+
+`pnpm eeg <synthea fhir folder> --out <empty folder> [--seconds 30] [--at 2026-01-01]`
+writes one EDF recording per person alive on the date, six channels (Fp1, Fp2,
+C3, C4, O1, O2) at 256 Hz, and `manifest.json` like the ECG's. EDF is the
+format of Kemp et al. 1992, read by EEG tools such as MNE and EDFbrowser.
+
+Each channel is a Jansen-Rit neural mass model (Jansen and Rit, Biol Cybern
+1995) with the paper's parameters: at connectivity C = 135 it produces the
+alpha rhythm near 10 Hz the paper reports, which the tests check. The model's
+output is a membrane potential, not a scalp voltage; scaling each channel to a
+standard deviation of 20 microvolts and driving channels with independent
+input are extensions. The EEG does not yet depend on the person's age or
+conditions; their id seeds it.
