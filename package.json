@@ -12,6 +12,7 @@
     "studio": "tsx studio/src/server.ts",
     "cohort": "tsx studio/src/cli.ts",
     "repro": "tsx studio/src/repro-check.ts",
+    "batch": "tsx studio/src/batch-cli.ts",
     "ecg": "tsx signals/src/ecg-cli.ts",
     "eeg": "tsx signals/src/eeg-cli.ts",
     "wearables": "tsx signals/src/wearables-cli.ts",

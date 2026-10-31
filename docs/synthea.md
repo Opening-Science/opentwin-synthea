@@ -84,21 +84,22 @@ The recipe used so far is 100 batches: seeds 1001–1100, clinician seeds
 2001–2100, giving 1,000,000 living patients (about 1.15 million records with the
 deceased) and about 860 MB compressed per batch.
 
-`generate.sh` writes to `out/` and clears it first unless
-`SYNTHEA_OUT_DIR` names another folder; give each parallel batch its own
-`SYNTHEA_OUT_DIR`. Sequentially, stopping at the first failure so a partial
-batch is never archived:
+`pnpm batch` runs the batches with parallel workers, each an ordinary
+`generate.sh` run in its own folder, and archives each batch's `fhir/` folder
+as `batch-NNN.tar.zst` next to its log and manifest:
 
 ```bash
-set -euo pipefail
-for i in $(seq 1 100); do
-  SYNTHEA_POPULATION=10000 SYNTHEA_SEED=$((1000 + i)) SYNTHEA_CLINICIAN_SEED=$((2000 + i)) \
-    ./generate.sh
-  name=$(printf 'batch-%03d' "$i")
-  cp out/manifest.json "$name.manifest.json"
-  tar -C out -cf - fhir | zstd -T0 -10 -o "$name.tar.zst"
-done
+pnpm batch --out /data/cohort --from 1 --to 100 --population 10000 --workers 6
 ```
+
+Batch _i_ uses seed 1000 + _i_ and clinician seed 2000 + _i_ (change them with
+`--seed-base` and `--clinician-seed-base`). `batches.tsv` records every
+finished batch with the columns of
+[`cohorts/synthea-1m-v2.tsv`](../cohorts/synthea-1m-v2.tsv). Rerunning the same
+command skips finished batches; a failed batch stops new ones from starting
+and leaves no partial archive. Each worker is a JVM, so set
+`JAVA_TOOL_OPTIONS=-Xmx3g` (or what your memory allows) for 10,000 people a
+batch.
 
 Keep the default dates, or set both date variables to the same value for every
 batch and record them.
