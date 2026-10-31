@@ -13,6 +13,7 @@
     "cohort": "tsx studio/src/cli.ts",
     "repro": "tsx studio/src/repro-check.ts",
     "ecg": "tsx signals/src/ecg-cli.ts",
+    "eeg": "tsx signals/src/eeg-cli.ts",
     "format": "biome check --write",
     "lint": "biome ci",
     "typecheck": "tsc --noEmit",
