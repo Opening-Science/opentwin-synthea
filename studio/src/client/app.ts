@@ -110,6 +110,29 @@ type ExploreIndex = {
   encountersByYear: Record<string, number>;
 };
 type Series = { name: string; unit: string; points: Array<[string, number]> };
+type WearableDay = {
+  date: string;
+  restingHeartRate: number;
+  hrvRmssdMs: number;
+  steps: number;
+  sleep: { totalSleepMinutes: number; deepMinutes: number; remMinutes: number };
+  spo2AveragePercent: number;
+};
+type Signals = {
+  personId: string;
+  date: string;
+  age: number;
+  alive: boolean;
+  ecg: {
+    sampleRate: number;
+    millivolts: number[];
+    heartRate: number;
+    heartRateFrom: string;
+    atrialFibrillation: boolean;
+  } | null;
+  eeg: { sampleRate: number; channels: Array<{ label: string; microvolts: number[] }> } | null;
+  wearables: WearableDay[] | null;
+};
 type Detail = {
   summary: Person;
   conditions: Array<{ name: string; onset: string | null; ended: string | null }>;
@@ -931,7 +954,13 @@ function line(host: HTMLElement, pts: Array<[string, number]>, unit: string, dat
     const v = y0 + ((y1 - y0) * i) / 3;
     s += `<line x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--grid)"/><text x="${L - 6}" y="${Y(v) + 4}" text-anchor="end">${+v.toPrecision(3)}</text>`;
   }
-  const yrs = dates ? [new Date(x0).getFullYear(), new Date(x1).getFullYear()] : [x0, x1];
+  const day = (t: number): string => new Date(t).toISOString().slice(0, 10);
+  const short = x1 - x0 < 2 * 365 * 86_400_000;
+  const yrs = dates
+    ? short
+      ? [day(x0), day(x1)]
+      : [new Date(x0).getFullYear(), new Date(x1).getFullYear()]
+    : [x0, x1];
   s += `<text x="${L}" y="${H - 6}">${yrs[0]}</text><text x="${W - R}" y="${H - 6}" text-anchor="end">${yrs[1]}</text>`;
   s += `<path d="${xs.map((x, i) => `${i ? 'L' : 'M'}${X(x).toFixed(1)} ${Y(ys[i] ?? 0).toFixed(1)}`).join('')}" fill="none" stroke="var(--s1)" stroke-width="2" stroke-linejoin="round"/>`;
   s += `<line class="xh" y1="${T}" y2="${H - B}" stroke="var(--muted)" stroke-dasharray="3 3" opacity="0"/><circle class="dot" r="4.5" fill="var(--s1)" stroke="var(--surface)" stroke-width="2" opacity="0"/>`;
@@ -1259,7 +1288,9 @@ async function openPerson(f: string): Promise<void> {
         (m) => m.name,
         (m) => day(m.date)
       )}</div></div>
-    </div>`;
+    </div>
+    <section id="signals" style="margin-top:16px"><h3>Signals</h3><p class="muted">Generating…</p></section>`;
+  void renderSignals(run, f);
   const drawSeries = (): void => {
     const sel = document.getElementById('seriesSel') as HTMLSelectElement | null;
     const x = r.series[Number(sel?.value ?? 0)];
@@ -1276,6 +1307,66 @@ async function openPerson(f: string): Promise<void> {
   });
   d.focus();
   d.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+const WEARABLE_SERIES: Array<[string, string, (d: WearableDay) => number]> = [
+  ['Resting heart rate', 'bpm', (d) => d.restingHeartRate],
+  ['HRV (RMSSD)', 'ms', (d) => d.hrvRmssdMs],
+  ['Steps', 'steps', (d) => d.steps],
+  ['Sleep', 'min', (d) => d.sleep.totalSleepMinutes],
+  ['Deep sleep', 'min', (d) => d.sleep.deepMinutes],
+  ['Mean overnight SpO2', '%', (d) => d.spo2AveragePercent]
+];
+
+async function renderSignals(run: RunRecord, f: string): Promise<void> {
+  const host = el('signals');
+  const r = await api<Signals>(`/api/runs/${run.runId}/signals?f=${encodeURIComponent(f)}`);
+  const fhir = `studio/runs/${run.runId}/out/fhir`;
+  const trace = (xs: number[], rate: number, seconds: number): Array<[string, number]> =>
+    xs.slice(0, rate * seconds).map((v, i) => [String(+(i / rate).toFixed(3)), v]);
+  const ecgNote = r.ecg
+    ? `Heart rate ${fmt(r.ecg.heartRate)} bpm (${r.ecg.heartRateFrom === 'vitals' ? 'latest Synthea vital sign' : 'no Synthea value, default'})` +
+      (r.ecg.atrialFibrillation ? '; atrial fibrillation on this date, drawn with the documented extension.' : '.')
+    : '';
+  host.innerHTML = `<h3>Signals</h3>
+    <p class="muted">Synthetic signals for this person on ${esc(r.date)}, from published models (see docs/signals.md). Research and testing only; not clinically valid.</p>
+    ${
+      r.alive
+        ? `<div class="grid g2">
+      <div><h4>ECG, lead II, first 5 s</h4><div id="ecgChart"></div><p class="muted">${esc(ecgNote)} ECGSYN model.</p></div>
+      <div><h4>EEG, awake, O1, first 5 s</h4><div id="eegChart"></div><p class="muted">Jansen-Rit model, alpha rhythm.</p></div>
+    </div>`
+        : '<p class="muted">This person died before the date, so there are no signals.</p>'
+    }
+    ${
+      r.wearables
+        ? `<h4>Wearables, last 30 days</h4><label for="wearSel" class="sr-only">Wearable value</label>
+      <select id="wearSel">${WEARABLE_SERIES.map((w, i) => `<option value="${i}">${esc(w[0])}</option>`).join('')}</select>
+      <div id="wearChart" style="margin-top:8px"></div>`
+        : r.alive
+          ? '<p class="muted">No wearable data: the norms used cover adults only.</p>'
+          : ''
+    }
+    <p class="muted">For the whole cohort: <code>pnpm ecg ${esc(fhir)} --out ecg</code>, <code>pnpm eeg ${esc(fhir)} --out eeg</code>, <code>pnpm wearables ${esc(fhir)} --out wearables</code>.</p>`;
+  if (r.ecg) line(el('ecgChart'), trace(r.ecg.millivolts, r.ecg.sampleRate, 5), 'mV', false, 'ECG lead II');
+  const o1 = r.eeg?.channels[0];
+  if (r.eeg && o1) line(el('eegChart'), trace(o1.microvolts, r.eeg.sampleRate, 5), 'µV', false, 'EEG O1');
+  const days = r.wearables;
+  if (days) {
+    const draw = (): void => {
+      const w = WEARABLE_SERIES[Number((document.getElementById('wearSel') as HTMLSelectElement | null)?.value ?? 0)];
+      if (w)
+        line(
+          el('wearChart'),
+          days.map((d) => [d.date, w[2](d)]),
+          w[1],
+          true,
+          w[0]
+        );
+    };
+    document.getElementById('wearSel')?.addEventListener('change', draw);
+    draw();
+  }
 }
 
 let resizeTimer = 0;

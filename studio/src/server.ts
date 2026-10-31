@@ -31,6 +31,7 @@ import {
   US_STATES
 } from './recipe.ts';
 import { isRunId, listRuns, type RunEvent, Runner, readRun } from './runner.ts';
+import { personSignals } from './signals.ts';
 import { estimateSeconds, timingSamples } from './timing.ts';
 
 const PORT = Number(process.env.COHORT_STUDIO_PORT ?? process.argv[2] ?? 4400);
@@ -289,6 +290,11 @@ async function route(req: IncomingMessage, res: ServerResponse): Promise<void> {
       const index = loadIndex(runDir, run.recipe.endDate);
       const d = personDetail(runDir, index, url.searchParams.get('f') ?? '');
       return d ? send(res, 200, d) : send(res, 404, { error: 'No such person in this run.' });
+    }
+    if (method === 'GET' && action === 'signals') {
+      const index = loadIndex(runDir, run.recipe.endDate);
+      const s = personSignals(runDir, index, url.searchParams.get('f') ?? '', run.recipe.endDate);
+      return s ? send(res, 200, s) : send(res, 404, { error: 'No such person in this run.' });
     }
   }
   send(res, 404, { error: 'Not found.' });
