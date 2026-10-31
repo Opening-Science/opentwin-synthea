@@ -27,7 +27,8 @@ traced back to its inputs:
 
 `pnpm ecg <synthea fhir folder> --out <empty folder> [--seconds 10] [--at 2026-01-01]`
 writes one ECG per person alive on the date, as a FHIR R4 Observation with a
-lead II SampledData component (256 Hz, microvolt steps), and `manifest.json`
+lead II SampledData component (256 Hz, microvolt steps) and as CSV
+(`time_s,lead_ii_mv`), and `manifest.json`
 with the recipe, each person's heart rate and rhythm, and the sha256 of every
 input bundle and output file.
 

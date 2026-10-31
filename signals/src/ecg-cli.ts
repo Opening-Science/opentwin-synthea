@@ -1,6 +1,6 @@
 /**
  * WHAT: Command line: reads every person in a Synthea FHIR output folder and writes one ECG observation per living
- *       person, plus manifest.json with the recipe, each person's inputs and the hash of every file written.
+ *       person, as FHIR and as CSV, plus manifest.json with the recipe, each person's inputs and the hash of every file written.
  * NOT:  Does not run Synthea; point it at the fhir folder generate.sh or Cohort Studio wrote.
  * GOVERNED BY: docs/signals.md
  * CORRECTNESS: NONE, no external authority checks what Synthea generates
@@ -43,7 +43,7 @@ function main(): number {
   mkdirSync(outDir, { recursive: true });
 
   const recipe = { seconds, sampleRate: 256, at };
-  const people: (EcgSummary & { sourceSha256: string; outputSha256: string })[] = [];
+  const people: (EcgSummary & { sourceSha256: string; outputSha256: string; csvSha256: string })[] = [];
   let skipped = 0;
   for (const file of readdirSync(sourceDir)
     .filter((f) => f.endsWith('.json'))
@@ -58,7 +58,13 @@ function main(): number {
     }
     const body = `${JSON.stringify(result.observation)}\n`;
     writeFileSync(join(outDir, `ecg-${result.summary.personId}.json`), body);
-    people.push({ ...result.summary, sourceSha256: sha256(text), outputSha256: sha256(body) });
+    writeFileSync(join(outDir, `ecg-${result.summary.personId}.csv`), result.csv);
+    people.push({
+      ...result.summary,
+      sourceSha256: sha256(text),
+      outputSha256: sha256(body),
+      csvSha256: sha256(result.csv)
+    });
   }
   const manifest = {
     generator: 'ecgsyn',
