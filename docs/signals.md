@@ -59,3 +59,35 @@ output is a membrane potential, not a scalp voltage; scaling each channel to a
 standard deviation of 20 microvolts and driving channels with independent
 input are extensions. The EEG does not yet depend on the person's age or
 conditions; their id seeds it.
+
+## Wearables
+
+`pnpm wearables <synthea fhir folder> --out <empty folder> [--days 30] [--end 2026-01-01]`
+writes, for every adult alive on the end date, one value set per day: resting
+heart rate, HRV (RMSSD), steps, one night of sleep with light, deep and REM
+minutes, mean overnight SpO2 and respiratory rate. Each person's days are
+written four times, as the payloads open-twin's connectors read:
+`open-wearables/`, `oura/`, `whoop/` and `google-health/`, one JSON file per
+person, plus `manifest.json`.
+
+| Value              | Source                                                                                                                           |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
+| Resting heart rate | the person's latest Synthea heart rate, else 65.5 ± 7.7 bpm; day to day SD 3.10 bpm women, 2.90 men (Quer et al., PLoS One 2020) |
+| HRV (RMSSD)        | mean ± SD by sex and decade, Voss et al., PLoS One 2015, Tables 5 and 7                                                          |
+| Steps              | mean by age and sex, SD = SE × √N, Bassett et al., Med Sci Sports Exerc 2010, Table 2                                            |
+| Sleep              | median total sleep, latency and stage shares by age group, Mitterling et al., Sleep 2015, Table 2                                |
+| SpO2               | median mean overnight saturation by age group, Mitterling et al. 2015, Table 5                                                   |
+| Respiratory rate   | the person's latest Synthea respiratory rate, else 16 per minute                                                                 |
+
+Extensions, not from those papers: day-to-day variation of HRV, steps, sleep
+time and SpO2; combining Bassett's age and sex effects by multiplication; the
+nearest age group outside a table's range. Voss measured RMSSD over 5 minutes
+awake, so nightly wearable values in real devices run higher. People under 18
+get no data, since none of these norms cover them.
+
+Each format was run through the matching open-twin connector (provider-oura,
+provider-whoop, provider-google-health, provider-open-wearables, open-twin
+main on 31 October 2026): every payload parsed, nothing was refused or left
+unmapped, and the values came out in the FHIR observations. The Whoop connector
+does not map sleep stages or respiratory rate, so those do not reach FHIR from
+the Whoop payload.
