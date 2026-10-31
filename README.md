@@ -35,8 +35,9 @@ files on any machine.
 ```bash
 pnpm lint
 pnpm typecheck
-pnpm test        # no Java needed
-pnpm repro       # Java needed: one recipe three times, identical patient files
+pnpm test           # no Java needed
+pnpm test:generate  # Java needed: generate.sh input and output folder guards
+pnpm repro          # Java needed: one recipe three times, identical patient files
 ```
 
 ## Used by
