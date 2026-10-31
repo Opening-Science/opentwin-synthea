@@ -12,6 +12,7 @@
     "studio": "tsx studio/src/server.ts",
     "cohort": "tsx studio/src/cli.ts",
     "repro": "tsx studio/src/repro-check.ts",
+    "ecg": "tsx signals/src/ecg-cli.ts",
     "format": "biome check --write",
     "lint": "biome ci",
     "typecheck": "tsc --noEmit",
