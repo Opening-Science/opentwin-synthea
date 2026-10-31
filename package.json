@@ -15,7 +15,8 @@
     "format": "biome check --write",
     "lint": "biome ci",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:generate": "bash generate.test.sh"
   },
   "author": "Open Science Foundation",
   "license": "MIT",
