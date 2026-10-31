@@ -1,5 +1,5 @@
 /**
- * WHAT: Turns one Synthea person into an ECG observation: heart rate from their latest vital signs, atrial
+ * WHAT: Turns one Synthea person into an ECG observation and CSV: heart rate from their latest vital signs, atrial
  *       fibrillation when Synthea gave them that condition, seeded by their id so each person keeps their trace.
  * NOT:  Does not read Synthea's output folder or write files; ecg-cli.ts does.
  * GOVERNED BY: docs/signals.md
@@ -21,7 +21,7 @@ export type EcgSummary = { personId: string; heartRate: number; heartRateFrom: '
 export function ecgForPerson(
   person: Person,
   recipe: EcgRecipe
-): { observation: Record<string, unknown>; summary: EcgSummary } | null {
+): { observation: Record<string, unknown>; csv: string; summary: EcgSummary } | null {
   if (person.deceasedAt !== null && person.deceasedAt <= recipe.at) return null;
   const measured = person.vitals.heartRate;
   const heartRate = measured !== undefined && measured >= 20 && measured <= 250 ? measured : DEFAULT_HEART_RATE;
@@ -43,8 +43,12 @@ export function ecgForPerson(
     factor: 0.001,
     channels: [{ code: { system: MDC, ...ECG_LEADS.II }, samples: ecg.millivolts }]
   });
+  const csv = ecg.millivolts
+    .map((v, i) => `${(i / recipe.sampleRate).toFixed(6)},${(Math.round(v * 1000) / 1000).toFixed(3)}`)
+    .join('\n');
   return {
     observation,
+    csv: `time_s,lead_ii_mv\n${csv}\n`,
     summary: { personId: person.id, heartRate, heartRateFrom: heartRate === measured ? 'vitals' : 'default', af }
   };
 }

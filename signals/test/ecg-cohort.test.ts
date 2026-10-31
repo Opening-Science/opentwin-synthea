@@ -26,6 +26,13 @@ describe('ecgForPerson', () => {
     expect(ecgForPerson(person({ conditions: [af] }), recipe)?.summary.af).toBe(true);
   });
 
+  it('writes the same samples as CSV, in seconds and millivolts', () => {
+    const lines = ecgForPerson(person(), recipe)?.csv.trimEnd().split('\n') ?? [];
+    expect(lines[0]).toBe('time_s,lead_ii_mv');
+    expect(lines).toHaveLength(2561);
+    expect(lines[2]).toMatch(/^0\.003906,-?\d+\.\d{3}$/);
+  });
+
   it('falls back to 70 bpm without a usable heart rate', () => {
     expect(ecgForPerson(person({ vitals: {} }), recipe)?.summary).toMatchObject({
       heartRate: 70,
